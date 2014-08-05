@@ -25,6 +25,8 @@ Modified (30 July 2011) by Donald J. Woodbury
 
 import sys
 import cv2.cv as cv
+import serial
+import time
 
 def detect_and_draw(image):
     image_size = cv.GetSize(image)
@@ -42,7 +44,7 @@ def detect_and_draw(image):
     # detect objects
     
     # locate relevant haar cascade data
-    haarlocation = '../Resources/haarcascade_frontalface_alt.xml' # Mac OS X example
+    haarlocation = 'haarcascade_frontalface_alt.xml' # Mac OS X example
     
     # load haar cascade data
     cascade = cv.Load(haarlocation)
@@ -54,11 +56,26 @@ def detect_and_draw(image):
         for i in faces:
             cv.Rectangle(image, (int(i[0][2])+int(i[0][0]), int(i[0][3])+int(i[0][1])),
                                     (int(i[0][0]), int(i[0][1])), (0, 255, 0), 3, 8, 0)
+
+            x1 = int(i[0][2])+int(i[0][0])
+            y1 = int(i[0][3])+int(i[0][1])
+            x2 = int(i[0][0])
+            y2 = int(i[0][1])
+
+            xx = int((x1+x2)/2)
+            yy = int((y1+y2)/2)
+
+            output = "X{0:d}Y{1:d}Z".format(xx, yy)
+            print "output = '" + output + "'"
+            serialConnection.write(output)
  
 if __name__ == "__main__":
  
     print "Press ESC to exit ..."
- 
+
+     # configure the serial connections (the parameters differs on the device you are connecting to)
+    serialConnection = serial.Serial('/dev/tty.usbmodem1421', 9600)
+
     # create windows
     cv.NamedWindow('Camera', cv.CV_WINDOW_AUTOSIZE)
  
@@ -98,4 +115,5 @@ if __name__ == "__main__":
         if k == 0x1b: # ESC
             print 'ESC pressed. Exiting ...'
             cv.DestroyWindow("Camera")  # This may not work on a Mac
+            serialConnection.close()
             break

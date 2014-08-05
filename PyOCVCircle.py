@@ -2,11 +2,19 @@ import cv2
 import cv2.cv as cv
 import numpy as np
 import sys
+import serial
+import time
         
      
 if __name__ == "__main__":
  
     print "Press ESC to exit ..."
+
+    # configure the serial connections (the parameters differs on the device you are connecting to)
+    serialConnection = serial.Serial(port='/dev/ttyUSB1', baudrate=9600, parity=serial.PARITY_ODD, stopbits=serial.STOPBITS_TWO, bytesize=serial.SEVENBITS)
+
+    serialConnection.open()
+    serialConnection.isOpen()
  
     # create windows
     cv.NamedWindow('Original', cv.CV_WINDOW_AUTOSIZE)
@@ -59,7 +67,17 @@ if __name__ == "__main__":
                 cv2.circle(imageArray,(i[0],i[1]),i[2],(0,255,0),2)
                 # draw the center of the circle
                 cv2.circle(imageArray,(i[0],i[1]),2,(0,0,255),3)
-                print "center = ", i[0], ",", i[1]
+                output = "X" + i[0].str() + "Y" + i[1].str()
+                print "output = '" + output + "'"
+                serialConnection.write(output + '\r\n')
+
+                time.sleep(1)
+                serialRead = ''
+                while serialConnection.inWaiting() > 0:
+                    serialRead += serialConnection.read(1)
+
+                if serialRead != '':
+                    print 'serialRead = ' + serialRead
         
         # display webcam image
         cv.ShowImage('Original', originalImage)
@@ -74,4 +92,5 @@ if __name__ == "__main__":
             print 'ESC pressed. Exiting ...'
             cv.DestroyWindow("Original")  # This may not work on a Mac
             cv.DestroyWindow("Threshold")  # This may not work on a Mac
+            serialConnection.close()
             break
